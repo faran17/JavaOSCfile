@@ -1,0 +1,2987 @@
+REM Written by Chris Johnson @ Oracle Service Cloud Technologies
+REM .NET update SCM 12/7/11
+REM Update to version 12.11, 12/24/2012 - RLH
+REM Update for Win8, 2/12/2013 - JD
+REM Update to version 13.2, 3/20/2013 - RLH
+REM Update to version 13.2.2, 4/24/2013 - RLH
+REM Update to version 13.8, 8/28/2013 - RLH
+REM Update to version 13.8.2, 9/06/2013 - RLH
+REM Update to version 14.8, 8/07/2014 - RLH
+REM Update to version 14.8.2, 8/22/2014 - RLH
+REM Update to version 14.11, 1/22/2015 - RLH
+
+@echo off
+cls
+mode con: cols=75 lines=20
+color 1F
+prompt $p$g
+
+Title Oracle Service Cloud Workstation Data Collector
+
+
+echo.
+echo.
+echo	          ******************************************************
+echo	          *				                       *
+echo	          *  	    	  Oracle Service Cloud	       	       *
+echo		  * 	       Workstation Data Collector	       *
+echo	          *				                       *
+echo	          ******************************************************
+echo.
+echo.
+echo           Please provide your Oracle Service Cloud username below.
+echo.
+echo.           
+echo           NOTE:  This is your username to log into the 
+echo                  Oracle Service Cloud application.
+echo.
+echo.
+echo.
+echo.
+set /p oscusername=Oracle Service Cloud Username: 
+echo.
+
+cls
+
+echo.
+echo.
+echo	          ******************************************************
+echo	          *				                       *
+echo	          *  	    	  Oracle Service Cloud	       	       *
+echo		  * 	       Workstation Data Collector	       *
+echo	          *				                       *
+echo	          ******************************************************
+echo.
+echo.
+echo           Please provide your Site Name below.
+echo.
+echo           NOTE: This is also known as your database name
+echo.
+echo           Example 1: mysite
+echo           Example 2: dbname
+echo.
+echo.
+echo.
+set /p sitename=Site Name: 
+echo.
+
+cls
+
+echo.
+echo.
+echo	          ******************************************************
+echo	          *				                       *
+echo	          *  	    	  Oracle Service Cloud	               *
+echo		  * 	       Workstation Data Collector	       *
+echo	          *				                       *
+echo	          ******************************************************
+echo.
+echo.
+
+echo           Please provide your Interface Name below.
+echo.
+echo           NOTE: This is the FQDN (subdomain.domain.com)
+echo.
+echo           Example 1: cx.rightnow.com
+echo           Example 2: interface.custhelp.com
+echo.
+echo.
+echo.
+set /p intname=Interface Name: 
+
+Title Oracle Service Cloud Data Collection in Progress - Please Do Not Close
+
+cls
+call :progress 0
+ver | find "Version 6.3" > nul
+if %ERRORLEVEL% == 0 goto ver_windows_7_8
+
+ver | find "Version 6.2" > nul
+if %ERRORLEVEL% == 0 goto ver_windows_7_8
+
+ver | find "Version 6.1" > nul
+if %ERRORLEVEL% == 0 goto ver_windows_7_8
+
+ver | find "Version 6" > nul
+if %ERRORLEVEL% == 0 goto ver_windows
+
+ver | find "5.2" > nul
+if %ERRORLEVEL% == 0 goto ver_windows
+
+ver | find "5.1" > nul
+if %ERRORLEVEL% == 0 goto ver_windows
+
+:ver_windows
+
+REM echo.
+REM echo Oracle Service Cloud Technologies Workstation Data Collector
+REM echo.
+
+echo ************************************************************* >OSCinfo.txt
+echo ****** Oracle Service Cloud Workstation Data Collector ****** >>OSCinfo.txt
+echo ************************************************************* >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo OSCinfo.BAT (Build 14.11 - 01/22/2015 10:00 MST) >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ***************************************************** >>OSCinfo.txt
+echo %date% >>OSCinfo.txt
+echo %time% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo Oracle Service Cloud Username: %oscusername% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo Site Name: %sitename% >>OSCinfo.txt
+echo Interface Name: %intname% >>OSCinfo.txt
+echo ***************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Loading Workstation Information
+call :progress 5
+echo ************************************************************* >>OSCinfo.txt
+echo ****************** WORKSTATION INFORMATION ****************** >>OSCinfo.txt
+echo ************************************************************* >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+systeminfo >>OSCinfo.txt
+if not exist "c:\autoexec.bat" goto WINnet
+dir c:\autoexec.bat >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+:WINnet
+echo ********************************************************** >>OSCinfo.txt
+echo **** WINDOW NETWORK CARD INFORMATION (ipconfig /all) ***** >>OSCinfo.txt
+echo ********************************************************** >>OSCinfo.txt
+call :progress 10
+echo. >>OSCinfo.txt
+
+ipconfig /all >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo *********************************************************** >>OSCinfo.txt
+echo *********** SET (WINDOWS ENVIRONMENT VARIABLES) *********** >>OSCinfo.txt
+echo *********************************************************** >>OSCinfo.txt
+call :progress 15
+echo. >>OSCinfo.txt
+set >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+
+if not exist "%windir%\system32\tasklist.exe" goto IEVer
+echo Loading Windows Tasklist Information
+echo *********************************************************** >>OSCinfo.txt
+echo ******************* TASKLIST INFORMATION ****************** >>OSCinfo.txt
+echo *********************************************************** >>OSCinfo.txt
+call :progress 20
+echo. >>OSCinfo.txt
+tasklist /v >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo *********************************************************** >>OSCinfo.txt
+echo **************** TASKLIST INFORMATION (SVC) *************** >>OSCinfo.txt
+echo *********************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+tasklist /svc >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+:IEVer
+echo Loading Internet Explorer Version Information
+call :progress 25
+echo ************************************************************* >>OSCinfo.txt
+echo ************** INTERNET EXPLORER VERSION INFO *************** >>OSCinfo.txt
+echo ************************************************************* >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Internet Explorer Version: >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer" /v Version') DO SET IEVER=%%C) 2>nul
+(if not exist "Version" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer" /v Version') DO SET IEVER=%%C) 2>nul
+echo %IEVER% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ************************************************************** >>OSCinfo.txt
+echo ******************** DEFAULT WEB BROWSER ********************* >>OSCinfo.txt
+echo ************************************************************** >>OSCinfo.txt
+call :progress 30
+
+echo Loading Default Web Browser Information
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CLASSES_ROOT\http\shell\open\command" /v ""') DO SET DEFBROWSER=%%C) 2>nul
+(if not exist "REG_SZ" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CLASSES_ROOT\http\shell\open\command" /v ""') DO SET DEFBROWSER=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%DEFBROWSER% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+
+echo ************************************************************** >>OSCinfo.txt
+echo ************* INTERNET EXPLORER DLL INFORMATION ************** >>OSCinfo.txt
+echo ************************************************************** >>OSCinfo.txt
+call :progress 35
+echo. >>OSCinfo.txt
+
+echo Internet Explorer DLL Information: >>OSCinfo.txt
+reg query "HKEY_CLASSES_ROOT\TypeLib\{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}\1.1\0\win32" /s | find "C:\WINDOWS\system32\ieframe.dll" >>OSCinfo.txt
+if ERRORLEVEL 1 goto nextdll
+
+:nextdll
+
+reg query "HKEY_CLASSES_ROOT\TypeLib\{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}\1.1\0\win32" /s | find "C:\WINDOWS\system32\shdocvw.dll" >>OSCinfo.txt
+if ERRORLEVEL 1 goto nextdll2
+
+:nextdll2
+
+echo. >>OSCinfo.txt
+echo Legend: >>OSCinfo.txt
+echo This applies to IE 7 >>OSCinfo.txt
+echo If the value is C:\WINDOWS\system32\shdocvw.dll, java errors are likely to occur on the end user pages. >>OSCinfo.txt
+echo If the value is C:\WINDOWS\system32\shdocvw.dll, you may need to replace the registry value with C:\WINDOWS\system32\ieframe.dll >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. Please reference Answer ID 2766 http://cx.rightnow.com/app/answers/detail/a_id/2766 >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+
+echo Loading Internet Explorer Web Browser Settings
+call :progress 40
+echo ************************************************************* >>OSCinfo.txt
+echo ****************** TEMPORARY INTERNET FILES ***************** >>OSCinfo.txt
+echo ************************************************************* >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Check for newer versions of stored pages: (Every Visit to the page = 0x3) >>OSCinfo.txt
+echo. >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v SyncMode5') DO SET SYNCMODE5=%%C) 2>nul
+(if not exist "SyncMode5" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v SyncMode5') DO SET SYNCMODE5=%%C) 2>nul
+echo VALUE=%SYNCMODE5% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo Legend: >>OSCinfo.txt
+echo IE 4.x - SyncMode, IE 5.x - SyncMode5 >>OSCinfo.txt
+echo 0 - Never >>OSCinfo.txt
+echo 2 - Every time you start Internet Explorer >>OSCinfo.txt
+echo 3 - Every visit to the page >>OSCinfo.txt
+echo 4 - Automatically (IE 5.x only) >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Internet Explorer Cache Size: >>OSCinfo.txt
+echo. >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\5.0\Cache\Content" /v CacheLimit') DO SET CACHELIMIT1=%%C) 2>nul
+(if not exist "CacheLimit" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\5.0\Cache\Content" /v CacheLimit') DO SET CACHELIMIT1=%%C) 2>nul
+echo Cache Size=%CACHELIMIT1% >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Cache\Content" /v CacheLimit') DO SET CACHELIMIT2=%%C) 2>nul
+(if not exist "CacheLimit" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Cache\Content" /v CacheLimit') DO SET CACHELIMIT2=%%C) 2>nul
+echo Cache Size=%CACHELIMIT2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo Legend/Examples: >>OSCinfo.txt
+echo 50 MB =  0xc800 >>OSCinfo.txt
+echo 1000 MB = 0xfa000 >>OSCinfo.txt
+echo 1024 MB = 0x100000 >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+call :progress 45
+echo ************************************************************* >>OSCinfo.txt
+echo *********************** INTERNET ZONE *********************** >>OSCinfo.txt
+echo ************************************************************* >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Run components not signed with Authenticode (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2004') DO SET NOAUTHENTICODE=%%C) 2>nul
+(if not exist "2004" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2004') DO SET NOAUTHENTICODE=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%NOAUTHENTICODE% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Run components signed with Authenticode (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2001') DO SET AUTHENTICODE=%%C) 2>nul
+(if not exist "2001" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2001') DO SET AUTHENTICODE=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%AUTHENTICODE% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Automatic Prompting for ActiveX controls (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2201') DO SET PROMPTACTIVEX=%%C) 2>nul
+(if not exist "2201" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2201') DO SET PROMPTACTIVEX=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%PROMPTACTIVEX% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Binary and script behaviors (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2000') DO SET BINARYSCRIPT=%%C) 2>nul
+(if not exist "2000" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2000') DO SET BINARYSCRIPT=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%BINARYSCRIPT% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Download signed ActiveX controls (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1001') DO SET SIGNEDACTIVEX=%%C) 2>nul
+(if not exist "1001" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1001') DO SET SIGNEDACTIVEX=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%SIGNEDACTIVEX% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Initialize and script ActiveX controls not marked as safe for scripting (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1201') DO SET SCRIPTEACTIVEX=%%C) 2>nul
+(if not exist "1201" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1201') DO SET SCRIPTACTIVEX=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%SCRIPTACTIVEX% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Run ActiveX controls and plug-ins (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1200') DO SET RUNACTIVEX=%%C) 2>nul
+(if not exist "1200" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1200') DO SET RUNACTIVEX=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%RUNACTIVEX% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Script ActiveX controls marked safe for scripting (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1405') DO SET ACTIVEXSAFE=%%C) 2>nul
+(if not exist "1405" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1405') DO SET ACTIVEXSAFE=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%ACTIVEXSAFE% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo File Download (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1803') DO SET FILEDOWNLOAD=%%C) 2>nul
+(if not exist "1803" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1803') DO SET FILEDOWNLOAD=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%FILEDOWNLOAD% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Access data sources across domains (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1406') DO SET ACROSSDOMAINS=%%C) 2>nul
+(if not exist "1406" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1406') DO SET ACROSSDOMAINS=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%ACROSSDOMAINS% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Allow scripting of Microsoft web browser control (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1206') DO SET BROWSERCONTROL=%%C) 2>nul
+(if not exist "1206" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1206') DO SET BROWSERCONTROL=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%BROWSERCONTROL% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Allow script-initiated windows without size or position constraints (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2102') DO SET SCRIPTINITIATED=%%C) 2>nul
+(if not exist "2102" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2102') DO SET SCRIPTINITIATED=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%SCRIPTINITIATED% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Allow Web pages to use restricted protocols for active content (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2300') DO SET RESTRICTEDPROTOCOLS=%%C) 2>nul
+(if not exist "2300" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2300') DO SET RESTRICTEDPROTOCOLS=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%RESTRICTEDPROTOCOLS% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Display mixed content (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1609') DO SET MIXEDCONTENT=%%C) 2>nul
+(if not exist "1609" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1609') DO SET MIXEDCONTENT=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%MIXEDCONTENT% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Launching of programs and files in an IFRAME (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1804') DO SET IEFRAME=%%C) 2>nul
+(if not exist "1804" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1804') DO SET IEFRAME=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%IEFRAME% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Navigate windows and frames across different domains (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1607') DO SET SUBFRAMES=%%C) 2>nul
+(if not exist "1607" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1607') DO SET SUBFRAMES=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%SUBFRAMES% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Userdata persistence (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1606') DO SET USERDATA=%%C) 2>nul
+(if not exist "1606" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1606') DO SET USERDATA=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%USERDATA% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Web sites in less privileged web content zone can navigate into this zone (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2101') DO SET LESSPRIVI=%%C) 2>nul
+(if not exist "2101" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2101') DO SET LESSPRIVI=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%LESSPRIVI% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Active Scripting (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1400') DO SET ACTIVESCRIPTING=%%C) 2>nul
+(if not exist "1400" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1400') DO SET ACTIVESCRIPTING=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%ACTIVESCRIPTING% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Allow Programmatic clipboard access (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1407') DO SET ALLOWPASTE=%%C) 2>nul
+(if not exist "1407" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1407') DO SET ALLOWPASTE=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%ALLOWPASTE% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Scripting of Java Applets (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1402') DO SET JAVAAPPLETS=%%C) 2>nul
+(if not exist "1402" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1402') DO SET JAVAAPPLETS=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%JAVAAPPLETS% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ************************************************************* >>OSCinfo.txt
+echo ********************** IE TRUSTED ZONE ********************** >>OSCinfo.txt
+echo ************************************************************* >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Listed Trusted Sites >>OSCinfo.txt
+reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains" /s >>OSCinfo.txt
+echo. >>OSCinfo.txt
+if ERRORLEVEL 1 goto trustedzonesettings
+echo. >>OSCinfo.txt
+
+:trustedzonesettings
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Run components not signed with Authenticode (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2004') DO SET NOAUTHENTICODE2=%%C) 2>nul
+(if not exist "2004" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2004') DO SET NOAUTHENTICODE2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%NOAUTHENTICODE2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Run components signed with Authenticode (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2001') DO SET AUTHENTICODE2=%%C) 2>nul
+(if not exist "2001" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2001') DO SET AUTHENTICODE2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%AUTHENTICODE2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Automatic Prompting for ActiveX controls (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2201') DO SET PROMPTACTIVEX2=%%C) 2>nul
+(if not exist "2201" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2201') DO SET PROMPTACTIVEX2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%PROMPTACTIVEX2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Binary and script behaviors (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2000') DO SET BINARYSCRIPTX2=%%C) 2>nul
+(if not exist "2000" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2000') DO SET BINARYSCRIPT2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%BINARYSCRIPT2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Download signed ActiveX controls (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1001') DO SET SIGNEDACTIVEX2=%%C) 2>nul
+(if not exist "1001" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1001') DO SET SIGNEDACTIVEX2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%SIGNEDACTIVEX2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Initialize and script ActiveX controls not marked as safe (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1201') DO SET SCRIPTACTIVEX2=%%C) 2>nul
+(if not exist "1201" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1201') DO SET SCRIPTACTIVEX2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%SCRIPTACTIVEX2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Run ActiveX controls and plug-ins (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1200') DO SET RUNACTIVEX2=%%C) 2>nul
+(if not exist "1200" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1200') DO SET RUNACTIVEX2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%RUNACTIVEX2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Script ActiveX controls marked safe for scripting (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1405') DO SET ACTIVEXSAFE2=%%C) 2>nul
+(if not exist "1405" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1405') DO SET ACTIVEXSAFE2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%ACTIVEXSAFE2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo File Download (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1803') DO SET FILEDOWNLOAD2=%%C) 2>nul
+(if not exist "1803" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1803') DO SET FILEDOWNLOAD2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%FILEDOWNLOAD2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Access data sources across domains (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1406') DO SET ACROSSDOMAINS2=%%C) 2>nul
+(if not exist "1406" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1406') DO SET ACROSSDOMAINS2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%ACROSSDOMAINS2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Allow scripting of Microsoft web browser control (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1206') DO SET BROWSERCONTROL2=%%C) 2>nul
+(if not exist "1206" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1206') DO SET BROWSERCONTROL2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%BROWSERCONTROL2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Allow script-initiated windows without size or position constraints (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2102') DO SET SCRIPTINITIATED2=%%C) 2>nul
+(if not exist "2102" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2102') DO SET SCRIPTINITIATED2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%SCRIPTINITIATED2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Allow Web pages to use restricted protocols for active content (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2300') DO SET RESTRICTEDPROTOCOLS2=%%C) 2>nul
+(if not exist "2300" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2300') DO SET RESTRICTEDPROTOCOLS2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%RESTRICTEDPROTOCOLS2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Display mixed content (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1609') DO SET MIXEDCONTENT2=%%C) 2>nul
+(if not exist "1609" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1609') DO SET MIXEDCONTENT2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%MIXEDCONTENT2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Launching of programs and files in an IFRAME (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1804') DO SET IEFRAME2=%%C) 2>nul
+(if not exist "1804" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1804') DO SET IEFRAME2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%IEFRAME2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Navigate windows and frames across different domains (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1607') DO SET SUBFRAMES2=%%C) 2>nul
+(if not exist "1607" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1607') DO SET SUBFRAMES2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%SUBFRAMES2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Userdata persistence (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1606') DO SET USERDATA2=%%C) 2>nul
+(if not exist "1606" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1606') DO SET USERDATA2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%USERDATA2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Web sites in less privileged web content zone can navigate into this zone (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2101') DO SET LESSPRIVI2=%%C) 2>nul
+(if not exist "2101" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2101') DO SET LESSPRIVI2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%LESSPRIVI2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Active Scripting (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1400') DO SET ACTIVESCRIPTING2=%%C) 2>nul
+(if not exist "1400" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1400') DO SET ACTIVESCRIPTING2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%ACTIVESCRIPTING2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Allow Programmatic clipboard access (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1407') DO SET ALLOWPASTE2=%%C) 2>nul
+(if not exist "1407" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1407') DO SET ALLOWPASTE2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%ALLOWPASTE2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Scripting of Java Applets (Enable = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1402') DO SET JAVAAPPLETS2=%%C) 2>nul
+(if not exist "1402" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1402') DO SET JAVAAPPLETS2=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%JAVAAPPLETS2% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+call :progress 50
+echo ************************************************************ >>OSCinfo.txt
+echo ******************* IE ADVANCED SETTINGS ******************* >>OSCinfo.txt
+echo ************************************************************ >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Use software rendering instead of GPU rendering (IE9 and later) (Unchecked = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main" /v UseSWRender') DO SET UseSWRender=%%C) 2>nul
+(if not exist "UseSWRender" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main" /v UseSWRender') DO SET UseSWRender=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%UseSWRender% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Send UTF-8 URLs (Unchecked = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v UrlEncoding') DO SET URLENCODING=%%C) 2>nul
+(if not exist "UrlEncoding" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v UrlEncoding') DO SET URLENCODING=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%URLENCODING% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Enable third party browser extensions (Checked = yes): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main" /v "Enable Browser Extensions"') DO SET EnableBrowserExtensions=%%C) 2>nul
+(if not exist "REG_SZ" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main" /v "Enable Browser Extensions"') DO SET EnableBrowserExtensions=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%EnableBrowserExtensions% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Use HTTP 1.1 through proxy connections (Checked = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyHttp1.1') DO SET PROXYHTTP=%%C) 2>nul
+(if not exist "ProxyHttp1.1" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyHttp1.1') DO SET PROXYHTTP=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%PROXYHTTP% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Allow active content to run in files on my computer (Checked = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN" /v iexplore.exe') DO SET ALLOWACTIVECONTENT=%%C) 2>nul
+(if not exist "iexplore.exe" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN" /v iexplore.exe') DO SET ALLOWACTIVECONTENT=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%ALLOWACTIVECONTENT% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Do not save encrypted pages to disk (Unchecked = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v DisableCachingOfSSLPages') DO SET DisableCachingOfSSLPages=%%C) 2>nul
+(if not exist "DisableCachingOfSSLPages" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v DisableCachingOfSSLPages') DO SET DisableCachingOfSSLPages=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%DisableCachingOfSSLPages% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Empty Temporary Internet Files when browser is closed (Unchecked = 0x1): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Cache" /v Persistent') DO SET Persistent=%%C) 2>nul
+(if not exist "Persistent" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Cache" /v Persistent') DO SET Persistent=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%Persistent% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Use SSL 3.0 (Default IE7 = 0xa0): >>OSCinfo.txt
+echo Use SSL 3.0 (Default IE6 = 0x28): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HHKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v SecureProtocols') DO SET SecureProtocols=%%C) 2>nul
+(if not exist "SecureProtocols" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v SecureProtocols') DO SET SecureProtocols=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%SecureProtocols% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo Legend: >>OSCinfo.txt
+echo IE 7 Settings: >>OSCinfo.txt
+echo If Use SSL 3.0 and TLS 1.0 are check, not Use SSL 2.0 (Default IE7 Settings) = 0xa0 >>OSCinfo.txt
+echo If Use SSL 3.0, Use SSL 2.0 and Use TLS 1.0 are all checked = 0xa8 >>OSCinfo.txt
+echo If Use SSL 3.0, Use SSL 2.0 and Use TLS 1.0 are all NOT checked = 0x0 >>OSCinfo.txt
+Echo IE6 Settings: >>OSCinfo.txt
+echo If Use SSL 3.0 and Use SSL 2.0 are checked, not Use TLS 1.0 (IE6 Default) = 0x28 >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo Warn if changing between secure and not secure mode (Unchecked = 0x0): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v WarnOnZoneCrossing') DO SET WarnOnZoneCrossing=%%C) 2>nul
+(if not exist "WarnOnZoneCrossing" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v WarnOnZoneCrossing') DO SET WarnOnZoneCrossing=%%C) 2>nul
+echo. >>OSCinfo.txt
+echo Value=%WarnOnZoneCrossing% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo Loading Internet Explorer Proxy Server Information
+
+echo ************************************************************** >>OSCinfo.txt
+echo ****************** PROXY SERVER INFORMATION ****************** >>OSCinfo.txt
+echo ************************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Internet Explorer Proxy Server Information: >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer') DO SET ProxyServer=%%C) 2>nul
+(if not exist "ProxyServer" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer') DO SET ProxyServer=%%C) 2>nul
+echo ProxyServer=%ProxyServer% >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable') DO SET ProxyEnable=%%C) 2>nul
+(if not exist "ProxyEnable" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable') DO SET ProxyEnable=%%C) 2>nul
+echo ProxyEnable=%ProxyEnable% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. ----------------------------------------------------------- >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo Use Automatic Configuration Script: >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v AutoConfigURL') DO SET AutoConfigURL=%%C) 2>nul
+(if not exist "AutoConfigURL" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v AutoConfigURL') DO SET AutoConfigURL=%%C) 2>nul
+echo Use Automatic Configuration Script=%AutoConfigURL% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v DefaultConnectionSettings') DO SET DefaultConnectionSettings=%%C) 2>nul
+(if not exist "DefaultConnectionSettings" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v DefaultConnectionSettings') DO SET DefualtConnectionSettings=%%C) 2>nul
+echo Automatically Detect Settings= >>OSCinfo.txt
+echo 	%DefaultConnectionSettings% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo 'Automatically detect settings' is determined by the 9th hexidecimal of the registry binary.>>OSCinfo.txt
+echo The setting can be determined by the following values: >>OSCinfo.txt
+echo	01 - Neither 'Automatically detect settings' or 'Use automatic configuration script' are enabled >>OSCinfo.txt
+echo	03 - Only 'Use a proxy server for your LAN' is enabled >>OSCinfo.txt
+echo	05 - Only 'Use automatic configuration script' is enabled >>OSCinfo.txt
+echo	07 - Both 'Use a proxy server for your LAN' and 'Use automatic configuration script' are enabled >>OSCinfo.txt
+echo	09 - Only 'Automatically detect settings' is enabled >>OSCinfo.txt
+echo	0B - Both 'Automatically detect settings' and 'Use a proxy server for your LAN' are enabled >>OSCinfo.txt
+echo	0D - Both 'Automatically detect settings' and 'Use automatic configuration script' are enabled >>OSCinfo.txt
+echo	0F - 'Automatically detect settings', 'Use a proxy server for your LAN' and 'Use automatic configuration script' are ALL enabled >>OSCinfo.txt
+echo	
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo Loading Microsoft .NET Version Information
+call :progress 60
+echo ************************************************************** >>OSCinfo.txt
+echo ************* MICROSOFT .NET VERSION INFORMATION ************* >>OSCinfo.txt
+echo ************************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+REM MICROSOFT.NET 1.1 FRAMEWORK
+echo Microsoft.NET Version(s): >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v1.1.4322" /v Install') DO SET DOTNET11=%%C) 2>nul
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v1.1.4322" /v Install') DO SET DOTNET11=%%C) 2>nul
+echo Microsoft.NET 1.1=%DOTNET11% >>OSCinfo.txt
+
+REM MICROSOFT.NET 2.0 FRAMEWORK
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" /v Install') DO SET DOTNET20=%%C) 2>nul
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" /v Install') DO SET DOTNET20=%%C) 2>nul
+echo Microsoft.NET 2.0=%DOTNET20% >>OSCinfo.txt
+
+REM MICROSOFT.NET 3.0
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.0" /v Install') DO SET DOTNET30=%%C) 2>nul
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.0" /v Install') DO SET DOTNET30=%%C) 2>nul
+echo Microsoft.NET 3.0=%DOTNET30% >>OSCinfo.txt
+
+REM MICROSOFT.NET 3.5
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.5" /v Install') DO SET DOTNET35=%%C) 2>nul
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v3.5" /v Install') DO SET DOTNET35=%%C) 2>nul
+echo Microsoft.NET 3.5=%DOTNET35% >>OSCinfo.txt
+
+REM MICROSOFT.NET 4.0 Client
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Client" /v Install') DO SET DOTNET40=%%C) 2>nul
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4.0" /v Install') DO SET DOTNET40=%%C) 2>nul
+echo Microsoft.NET 4.0 Client Profile=%DOTNET40% >>OSCinfo.txt
+
+REM MICROSOFT.NET 4.0 Extended
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Extended" /v Install') DO SET DOTNET40=%%C) 2>nul
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4.0" /v Install') DO SET DOTNET40=%%C) 2>nul
+echo Microsoft.NET 4.0 Extended=%DOTNET40% >>OSCinfo.txt
+
+REM MICROSOFT.NET 4.0 Full
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" /v Install') DO SET DOTNET40=%%C) 2>nul
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4.0" /v Install') DO SET DOTNET40=%%C) 2>nul
+echo Microsoft.NET 4.0 Full=%DOTNET40% >>OSCinfo.txt
+
+reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" /v "Version" >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo Legend: >>OSCinfo.txt
+echo 0x1=Installed >>OSCinfo.txt
+echo Nul=Not Installed >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo Loading Microsoft .NET Codegroup Information
+echo ************************************************************** >>OSCinfo.txt
+echo ***************** Microsoft .NET Codegroups ****************** >>OSCinfo.txt
+echo ************************************************************** >>OSCinfo.txt 
+
+echo. >>OSCinfo.txt
+if not exist "%windir%\Microsoft.NET\Framework\v2.0.50727\caspol.exe" goto winprofile
+%windir%\Microsoft.NET\Framework\v2.0.50727\caspol -lg >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+:winprofile
+echo. >>OSCinfo.txt
+
+echo Loading Windows Profile Information
+echo ************************************************************** >>OSCinfo.txt
+echo **************** WINDOWS PROFILE INFORMATION ***************** >>OSCinfo.txt
+echo ************************************************************** >>OSCinfo.txt 
+
+echo. >>OSCinfo.txt
+echo WINDOWS PROFILE: >>OSCinfo.txt
+echo %USERPROFILE% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo LOCAL ADMINISTRATORS GROUP: >>OSCinfo.txt
+net localgroup administrators >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo ------------------------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo ******************************************************************** >>OSCinfo.txt
+echo *************** WINDOWS ROAMING or MANDATORY PROFILE *************** >>OSCinfo.txt
+echo ******************************************************************** >>OSCinfo.txt
+call :progress 65
+reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList" /s | find "CentralProfile" >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo LEGEND: >>OSCinfo.txt
+echo Example 1: >>OSCinfo.txt
+echo CentralProfile	REG_SZ >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo Example 2: >>OSCinfo.txt
+echo CentralProfile	REG_SZ	\\servername\sharename\profilename >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo The examples listed above show a non roaming/mandatory Windows profile (Example 1) and a mandatory/roaming Windows profile (Example 2). >>OSCinfo.txt
+echo If you can correlate the "profilename" at the end of the string with %USERPROFILE% listed above, this is likely a mandatory/roaming Windows profile. >>OSCinfo.txt
+echo If you see anything other than a nul value, this indicates a roaming or mandatory Windows Profile has been created on the workstation. >>OSCinfo.txt 
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo REGISTRY KEY VALUES FOR NTUSER.man >>OSCinfo.txt
+echo NOTE: If the below area below is blank, this would indicate no Windows Mandatory Profiles are found on the workstation. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\hivelist" >>OSCinfo.txt
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo. >>OSCinfo.txt
+reg query "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\hivelist" /s | find "NTUSER.man" >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo LEGEND: >>OSCinfo.txt
+echo Example 1: \Device\HarddiskVolume1\Documents and Settings\%username%\NTUSER.man >>OSCinfo.txt
+echo The example above (Example 1:) would indicate a Windows Mandatory Profile. However, if the value is nul this does not dismiss the possibility of the Windows Profile being a Roaming Windows Profile. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo Nul value = no Windows Mandatory Profile >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+call :progress 70
+echo Loading Oracle Service Cloud Files Listing
+echo ******************************************************** >>OSCinfo.txt
+echo ********* Oracle Service Cloud Files Listing *********** >>OSCinfo.txt
+echo ******************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo Oracle Service Cloud DEPLOYMENT FOLDER: >>OSCinfo.txt
+echo. >>OSCinfo.txt
+if exist "%APPDATA%\RightNow_Technologies" dir /s /o-d "%APPDATA%\RightNow_Technologies" >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo Oracle Service Cloud CLICKONCE FOLDER: >>OSCinfo.txt
+echo. >>OSCinfo.txt
+if exist "%USERPROFILE%\Local Settings\Apps\2.0" dir /s /o-d "%USERPROFILE%\Local Settings\Apps\2.0" >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo Oracle Service Cloud START MENU FOLDER: >>OSCinfo.txt
+echo. >>OSCinfo.txt
+if exist "%USERPROFILE%\Start Menu\Programs\RightNow" dir /s /o-d "%USERPROFILE%\Start Menu\Programs\RightNow" >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+ 
+
+echo Loading Windows Time Server Information
+echo *********************************************************** >>OSCinfo.txt
+echo ******************* WINDOWS TIME SERVER ******************* >>OSCinfo.txt
+echo *********************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo TIME SERVER: >>OSCinfo.txt
+net time >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\W32Time\Parameters" /v "NtpServer"') DO SET TIMESERVER=%%C) 2>nul
+(if not exist "NtpServer" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\W32Time\Parameters" /v "NtpServer"') DO SET TIMESERVER=%%C) 2>nul
+echo Server: >>OSCinfo.txt
+echo. %TIMESERVER% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Parameters" /v "NtpServer"') DO SET TIMESERVERSA=%%C) 2>nul
+(if not exist "NtpServer" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Parameters" /v "NtpServer"') DO SET TIMESERVERSA=%%C) 2>nul
+echo Local Workstation: >>OSCinfo.txt
+echo. %TIMESERVERSA% >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Loading Installed Applications
+echo *********************************************************** >>OSCinfo.txt
+echo ****************** ADD or REMOVE PROGRAMS ***************** >>OSCinfo.txt
+echo *********************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+regedit /e %TEMP%\regexport.txt "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall" 
+
+find "DisplayName" %TEMP%\regexport.txt > %TEMP%\regprogs.txt
+
+sort "%TEMP%\regprogs.txt" > "%TEMP%\sorted.txt"
+
+for /f "tokens=2 delims==" %%a in (%TEMP%\sorted.txt) do echo %%a >> OSCinfo.txt
+
+del %TEMP%\regexport.txt
+del %TEMP%\regprogs.txt
+del %TEMP%\sorted.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Loading Installed Microsoft Updates/Hotfixes
+
+echo *********************************************************** >>OSCinfo.txt
+echo ****************** INSTALLED UPDATES ********************** >>OSCinfo.txt
+echo *********************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+wmic /append:OSCinfo.txt qfe get hotfixid,description,installedon >nul
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+
+echo ************************************************************* >>OSCinfo.txt
+echo ******************** NETWORK INFORMATION ******************** >>OSCinfo.txt
+echo ************************************************************* >>OSCinfo.txt
+
+call :progress 75
+
+echo. >>OSCinfo.txt
+
+echo Namespace Lookup: >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+nslookup %intname% >>OSCinfo.txt
+
+cls
+
+echo Testing Internet Connection (pings and traceroutes)
+echo.
+echo.
+echo	             Please be patient, this may take a few minutes.
+echo.
+echo.
+echo	   	     You will be notified when the process
+echo		     has completed.  Closing this window will
+echo		     prematurely terminate the process.
+
+echo.
+echo.
+
+echo. >>OSCinfo.txt
+
+ping -n 10 -l 800 %intname% >>OSCinfo.txt
+call :progress 77
+ping -n 10 -l 800 %intname% >>OSCinfo.txt
+call :progress 79
+ping -n 10 -l 800 %intname% >>OSCinfo.txt
+call :progress 81
+ping -n 10 -l 800 %intname% >>OSCinfo.txt
+call :progress 83
+ping -n 10 -l 800 %intname% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+call :progress 85
+
+tracert %intname% >>OSCinfo.txt
+call :progress 87
+tracert %intname% >>OSCinfo.txt
+call :progress 89
+tracert %intname% >>OSCinfo.txt
+call :progress 91
+tracert %intname% >>OSCinfo.txt
+call :progress 93
+tracert %intname% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+call :progress 95
+echo %date% >>OSCinfo.txt
+echo %time% >>OSCinfo.txt
+
+REM START /max /wait NOTEPAD.EXE OSCinfo.txt
+
+Title OSCinfo.bat - Operation Complete
+
+cls
+Color 2F
+echo.
+echo.
+echo.
+echo.
+echo.
+echo	          ******************************************************
+echo	          *				                       *
+echo	          *  	    	Oracle Service Cloud	               *
+echo		  * 	       Workstation Data Collector	       *
+echo           *                Operation Complete                  *
+echo	          *				                       *
+echo	          ******************************************************
+echo.
+echo.
+echo               Thank you for your patience! The data collector
+echo			          process has completed.
+echo.
+echo		     You should now see a file on your desktop called
+echo                              'OSCinfo.txt' 
+echo. 
+echo		     Please provide this file to your Oracle Service Cloud
+echo                         support agent for analysis.
+echo.
+pause
+color 0F
+cls
+goto exit
+
+
+exit
+
+:ver_windows_7_8
+
+ 
+
+REM **************************************************************
+
+REM ***************** WINDOWS 7 & 8 SECTION ********************
+
+REM **************************************************************
+
+ 
+
+echo ************************************************************* >OSCinfo.txt
+echo ****** Oracle Service Cloud Workstation Data Collector ****** >>OSCinfo.txt
+echo ************************************************************* >>OSCinfo.txt
+call :progress 5
+ 
+
+echo. >>OSCinfo.txt
+
+echo OSCinfo.BAT (Build 14.11 - 01/22/2015 10:00 MST) >>OSCinfo.txt
+
+echo. >>OSCinfo.txt 
+
+echo ------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt 
+
+echo %date% >>OSCinfo.txt
+
+echo %time% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Site Name: %sitename% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Interface Name: %intname% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Oracle Service Cloud Username: %oscusername% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt 
+
+echo Loading Workstation Information
+
+ call :progress 10
+
+echo ************************************************************* >>OSCinfo.txt
+
+echo ****************** WORKSTATION INFORMATION ****************** >>OSCinfo.txt
+
+echo ************************************************************* >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+systeminfo >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Loading Video Card and Driver Information
+
+echo ************************************************************* >>OSCinfo.txt
+
+echo *********** VIDEO DEVICE AND DRIVER INFORMATION ************* >>OSCinfo.txt
+
+echo ************************************************************* >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+powershell.exe -executionpolicy bypass -command "get-wmiObject win32_VideoController |select DeviceID,Name,DriverVersion |ft -a" >>OSCinfo.txt
+echo. >>OSCinfo.txt
+powershell.exe -executionpolicy bypass -command "get-wmiObject win32_VideoController |select AdapterRAM,AdapterDACType,VideoModeDescription |ft -a" >>OSCinfo.txt
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt 
+
+
+echo ********************************************************** >>OSCinfo.txt
+
+echo ******** NETWORK CARD INFORMATION (ipconfig /all) ******** >>OSCinfo.txt
+
+echo ********************************************************** >>OSCinfo.txt
+
+ call :progress 15
+
+echo. >>OSCinfo.txt
+
+ipconfig /all >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo *********************************************************** >>OSCinfo.txt
+
+echo *********** SET (WINDOWS ENVIRONMENT VARIABLES) *********** >>OSCinfo.txt
+
+echo *********************************************************** >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+set >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+if not exist "%windir%\system32\tasklist.exe" goto IEVer
+
+
+
+echo Loading Windows Tasklist Information
+
+echo *********************************************************** >>OSCinfo.txt
+
+echo ******************* TASKLIST INFORMATION ****************** >>OSCinfo.txt
+
+echo *********************************************************** >>OSCinfo.txt
+
+ call :progress 20
+
+echo. >>OSCinfo.txt
+
+tasklist /v >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+
+echo Loading Microsoft .NET Version Information
+
+ 
+echo ************************************************************** >>OSCinfo.txt
+
+echo ************* MICROSOFT .NET VERSION INFORMATION ************* >>OSCinfo.txt
+
+echo ************************************************************** >>OSCinfo.txt
+
+  call :progress 25
+
+echo. >>OSCinfo.txt
+ 
+
+REM MICROSOFT.NET 4.0 Client
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Client" /v Install') DO SET DOTNET40=%%C) 2>nul
+
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4.0" /v Install') DO SET DOTNET35=%%C) 2>nul
+
+echo Microsoft.NET 4.0 Client Profile=%DOTNET40% >>OSCinfo.txt
+
+ 
+
+REM MICROSOFT.NET 4.0 Extended
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Extended" /v Install') DO SET DOTNET40=%%C) 2>nul
+
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4.0" /v Install') DO SET DOTNET35=%%C) 2>nul
+
+echo Microsoft.NET 4.0 Extended=%DOTNET40% >>OSCinfo.txt
+
+ 
+
+REM MICROSOFT.NET 4.0 Full
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" /v Install') DO SET DOTNET40=%%C) 2>nul
+
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4.0" /v Install') DO SET DOTNET35=%%C) 2>nul
+
+echo Microsoft.NET 4.0 Full=%DOTNET40% >>OSCinfo.txt
+
+
+echo. >>OSCinfo.txt
+
+
+REM MICROSOFT.NET 4.5 Client
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Client" /v Version') DO SET DOTNET40=%%C) 2>nul
+
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4.0" /v Version') DO SET DOTNET35=%%C) 2>nul
+
+echo Microsoft.NET 4.0 Client Version = %DOTNET40% >>OSCinfo.txt
+
+
+
+REM MICROSOFT.NET 4.5 Full
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" /v Version') DO SET DOTNET40=%%C) 2>nul
+
+(if not exist "Install" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4.0" /v Version') DO SET DOTNET35=%%C) 2>nul
+
+echo Microsoft.NET 4.0 Full Version = %DOTNET40% >>OSCinfo.txt
+
+
+echo. >>OSCinfo.txt
+
+
+echo Legend: >>OSCinfo.txt
+
+echo 0x1=Installed >>OSCinfo.txt
+
+echo Nul=Not Installed >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+
+:winprofile
+
+echo. >>OSCinfo.txt
+
+echo ************************************************************* >>OSCinfo.txt
+
+echo ************** INTERNET EXPLORER VERSION INFO *************** >>OSCinfo.txt
+
+echo ************************************************************* >>OSCinfo.txt
+
+echo Loading Internet Explorer Version Information
+
+echo. >>OSCinfo.txt
+
+reg query "HKLM\Software\Microsoft\Internet Explorer" /v svcUpdateVersion >nul 2>&1
+if %ERRORLEVEL% == 1 goto svcVersion1
+if %ERRORLEVEL% == 0 goto svcUpdateVersion
+
+:svcUpdateVersion
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer" /v svcUpdateVersion') DO SET IEVER=%%C) 2>nul
+
+(if not exist "svcUpdateVersion" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer" /v svcUpdateVersion') DO SET IEVER=%%C) 2>nul
+
+reg query "HKLM\Software\Microsoft\Internet Explorer" /v svcUpdateVersion >nul 2>&1
+if %ERRORLEVEL% == 0 goto IEVER
+if %ERRORLEVEL% == 1 goto svcVersion1
+
+:svcVersion1
+
+reg query "HKLM\Software\Microsoft\Internet Explorer" /v svcVersion >nul 2>&1
+if %ERRORLEVEL% == 0 goto svcVersion2
+if %ERRORLEVEL% == 1 goto Version
+
+:svcVersion2
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer" /v svcVersion') DO SET IEVER=%%C) 2>nul
+
+(if not exist "svcVersion" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer" /v svcVersion') DO SET IEVER=%%C) 2>nul
+
+reg query "HKLM\Software\Microsoft\Internet Explorer" /v svcVersion >nul 2>&1
+if %ERRORLEVEL% == 0 goto IEVER
+if %ERRORLEVEL% == 1 goto version
+
+:Version
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer" /v Version') DO SET IEVER=%%C) 2>nul
+
+(if not exist "Version" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Internet Explorer" /v Version') DO SET IEVER=%%C) 2>nul
+
+:IEVER
+
+echo Internet Explorer Version: %IEVER% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+:browserversion
+
+echo ************************************************************** >>OSCinfo.txt
+
+echo ******************** DEFAULT WEB BROWSER ********************* >>OSCinfo.txt
+
+echo ************************************************************** >>OSCinfo.txt
+
+ call :progress 30
+
+ 
+
+echo Loading Default Web Browser Information
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CLASSES_ROOT\http\shell\open\command" /v ""') DO SET DEFBROWSER=%%C) 2>nul
+
+(if not exist "REG_SZ" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CLASSES_ROOT\http\shell\open\command" /v ""') DO SET DEFBROWSER=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%DEFBROWSER% >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+ 
+
+echo ************************************************************** >>OSCinfo.txt
+
+echo ************* INTERNET EXPLORER DLL INFORMATION ************** >>OSCinfo.txt
+
+echo ************************************************************** >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+REM ---------Win 7 DLL --------
+
+echo Internet Explorer DLL Information: >>OSCinfo.txt
+
+reg query "HKEY_CLASSES_ROOT\TypeLib\{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}\1.1\0\win32" /s | find "C:\Windows\SysWOW64\ieframe.dll" >>OSCinfo.txt
+
+if ERRORLEVEL 1 goto nextdll
+
+call :progress 35
+:nextdll
+
+ 
+
+reg query "HKEY_CLASSES_ROOT\TypeLib\{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}\1.1\0\win32" /s | find "C:\WINDOWS\system32\shdocvw.dll" >>OSCinfo.txt
+
+if ERRORLEVEL 1 goto nextdll2
+
+ 
+
+:nextdll2
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo Legend: >>OSCinfo.txt
+
+echo This applies to IE 7 >>OSCinfo.txt
+
+echo If the value is C:\WINDOWS\system32\shdocvw.dll, java errors are likely to occur on the end user pages. >>OSCinfo.txt
+
+echo If the value is C:\WINDOWS\system32\shdocvw.dll, you may need to replace the registry value with C:\WINDOWS\system32\ieframe.dll >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. Please reference Answer ID 2766 http://cx.rightnow.com/app/answers/detail/a_id/2766 >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+ 
+
+echo Loading Internet Explorer Web Browser Settings
+
+ 
+
+echo ************************************************************* >>OSCinfo.txt
+
+echo ****************** TEMPORARY INTERNET FILES ***************** >>OSCinfo.txt
+
+echo ************************************************************* >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+
+ call :progress 40
+
+echo Check for newer versions of stored pages: (Every Visit to the page = 0x3) >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v SyncMode5') DO SET SYNCMODE5=%%C) 2>nul
+
+(if not exist "SyncMode5" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v SyncMode5') DO SET SYNCMODE5=%%C) 2>nul
+
+echo VALUE=%SYNCMODE5% >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo Legend: >>OSCinfo.txt
+
+echo IE 4.x - SyncMode, IE 5.x - SyncMode5 >>OSCinfo.txt
+
+echo 0 - Never >>OSCinfo.txt
+
+echo 2 - Every time you start Internet Explorer >>OSCinfo.txt
+
+echo 3 - Every visit to the page >>OSCinfo.txt
+
+echo 4 - Automatically (IE 5.x only) >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+
+ call :progress 45
+
+echo ************************************************************* >>OSCinfo.txt
+
+echo *********************** INTERNET ZONE *********************** >>OSCinfo.txt
+
+echo ************************************************************* >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Run components not signed with Authenticode (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2004') DO SET NOAUTHENTICODE=%%C) 2>nul
+
+(if not exist "2004" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2004') DO SET NOAUTHENTICODE=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%NOAUTHENTICODE% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Run components signed with Authenticode (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2001') DO SET AUTHENTICODE=%%C) 2>nul
+
+(if not exist "2001" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2001') DO SET AUTHENTICODE=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%AUTHENTICODE% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Automatic Prompting for ActiveX controls (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2201') DO SET PROMPTACTIVEX=%%C) 2>nul
+
+(if not exist "2201" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2201') DO SET PROMPTACTIVEX=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%PROMPTACTIVEX% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Binary and script behaviors (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2000') DO SET BINARYSCRIPT=%%C) 2>nul
+
+(if not exist "2000" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2000') DO SET BINARYSCRIPT=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%BINARYSCRIPT% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Download signed ActiveX controls (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1001') DO SET SIGNEDACTIVEX=%%C) 2>nul
+
+(if not exist "1001" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1001') DO SET SIGNEDACTIVEX=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%SIGNEDACTIVEX% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Initialize and script ActiveX controls not marked as safe (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1201') DO SET SCRIPTEACTIVEX=%%C) 2>nul
+
+(if not exist "1201" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1201') DO SET SCRIPTACTIVEX=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%SCRIPTACTIVEX% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Run ActiveX controls and plug-ins (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1200') DO SET RUNACTIVEX=%%C) 2>nul
+
+(if not exist "1200" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1200') DO SET RUNACTIVEX=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%RUNACTIVEX% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Script ActiveX controls marked safe for scripting (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1405') DO SET ACTIVEXSAFE=%%C) 2>nul
+
+(if not exist "1405" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1405') DO SET ACTIVEXSAFE=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%ACTIVEXSAFE% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo File Download (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1803') DO SET FILEDOWNLOAD=%%C) 2>nul
+
+(if not exist "1803" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1803') DO SET FILEDOWNLOAD=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%FILEDOWNLOAD% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Access data sources across domains (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1406') DO SET ACROSSDOMAINS=%%C) 2>nul
+
+(if not exist "1406" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1406') DO SET ACROSSDOMAINS=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%ACROSSDOMAINS% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Allow scripting of Microsoft web browser control (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1206') DO SET BROWSERCONTROL=%%C) 2>nul
+
+(if not exist "1206" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1206') DO SET BROWSERCONTROL=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%BROWSERCONTROL% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Allow script-initiated windows without size or position constraints (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2102') DO SET SCRIPTINITIATED=%%C) 2>nul
+
+(if not exist "2102" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2102') DO SET SCRIPTINITIATED=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%SCRIPTINITIATED% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Allow Web pages to use restricted protocols for active content (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2300') DO SET RESTRICTEDPROTOCOLS=%%C) 2>nul
+
+(if not exist "2300" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2300') DO SET RESTRICTEDPROTOCOLS=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%RESTRICTEDPROTOCOLS% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Display mixed content (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1609') DO SET MIXEDCONTENT=%%C) 2>nul
+
+(if not exist "1609" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1609') DO SET MIXEDCONTENT=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%MIXEDCONTENT% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Launching of programs and files in an IFRAME (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1804') DO SET IEFRAME=%%C) 2>nul
+
+(if not exist "1804" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1804') DO SET IEFRAME=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%IEFRAME% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Navigate windows and frames across different domains (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1607') DO SET SUBFRAMES=%%C) 2>nul
+
+(if not exist "1607" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1607') DO SET SUBFRAMES=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%SUBFRAMES% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Userdata persistence (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1606') DO SET USERDATA=%%C) 2>nul
+
+(if not exist "1606" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1606') DO SET USERDATA=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%USERDATA% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Web sites in less privileged web content zone can navigate into this zone (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2101') DO SET LESSPRIVI=%%C) 2>nul
+
+(if not exist "2101" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 2101') DO SET LESSPRIVI=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%LESSPRIVI% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Active Scripting (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1400') DO SET ACTIVESCRIPTING=%%C) 2>nul
+
+(if not exist "1400" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1400') DO SET ACTIVESCRIPTING=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%ACTIVESCRIPTING% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Allow Programmatic clipboard access (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1407') DO SET ALLOWPASTE=%%C) 2>nul
+
+(if not exist "1407" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1407') DO SET ALLOWPASTE=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%ALLOWPASTE% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Scripting of Java Applets (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1402') DO SET JAVAAPPLETS=%%C) 2>nul
+
+(if not exist "1402" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /v 1402') DO SET JAVAAPPLETS=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%JAVAAPPLETS% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ************************************************************* >>OSCinfo.txt
+
+echo ********************** IE TRUSTED ZONE ********************** >>OSCinfo.txt
+
+echo ************************************************************* >>OSCinfo.txt
+ 
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Listed Trusted Sites >>OSCinfo.txt
+
+reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains" /s >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+if ERRORLEVEL 1 goto trustedzonesettings
+
+echo. >>OSCinfo.txt
+
+ 
+
+:trustedzonesettings
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Run components not signed with Authenticode (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2004') DO SET NOAUTHENTICODE2=%%C) 2>nul
+
+(if not exist "2004" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2004') DO SET NOAUTHENTICODE2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%NOAUTHENTICODE2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Run components signed with Authenticode (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2001') DO SET AUTHENTICODE2=%%C) 2>nul
+
+(if not exist "2001" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2001') DO SET AUTHENTICODE2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%AUTHENTICODE2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Automatic Prompting for ActiveX controls (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2201') DO SET PROMPTACTIVEX2=%%C) 2>nul
+
+(if not exist "2201" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2201') DO SET PROMPTACTIVEX2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%PROMPTACTIVEX2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Binary and script behaviors (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2000') DO SET BINARYSCRIPTX2=%%C) 2>nul
+
+(if not exist "2000" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2000') DO SET BINARYSCRIPT2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%BINARYSCRIPT2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Download signed ActiveX controls (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1001') DO SET SIGNEDACTIVEX2=%%C) 2>nul
+
+(if not exist "1001" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1001') DO SET SIGNEDACTIVEX2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%SIGNEDACTIVEX2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Initialize and script ActiveX controls not marked as safe (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1201') DO SET SCRIPTACTIVEX2=%%C) 2>nul
+
+(if not exist "1201" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1201') DO SET SCRIPTACTIVEX2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%SCRIPTACTIVEX2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Run ActiveX controls and plug-ins (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1200') DO SET RUNACTIVEX2=%%C) 2>nul
+
+(if not exist "1200" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1200') DO SET RUNACTIVEX2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%RUNACTIVEX2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Script ActiveX controls marked safe for scripting (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1405') DO SET ACTIVEXSAFE2=%%C) 2>nul
+
+(if not exist "1405" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1405') DO SET ACTIVEXSAFE2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%ACTIVEXSAFE2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo File Download (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1803') DO SET FILEDOWNLOAD2=%%C) 2>nul
+
+(if not exist "1803" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1803') DO SET FILEDOWNLOAD2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%FILEDOWNLOAD2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Access data sources across domains (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1406') DO SET ACROSSDOMAINS2=%%C) 2>nul
+
+(if not exist "1406" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1406') DO SET ACROSSDOMAINS2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%ACROSSDOMAINS2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Allow scripting of Microsoft web browser control (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1206') DO SET BROWSERCONTROL2=%%C) 2>nul
+
+(if not exist "1206" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1206') DO SET BROWSERCONTROL2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%BROWSERCONTROL2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Allow script-initiated windows without size or position constraints (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2102') DO SET SCRIPTINITIATED2=%%C) 2>nul
+
+(if not exist "2102" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2102') DO SET SCRIPTINITIATED2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%SCRIPTINITIATED2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Allow Web pages to use restricted protocols for active content (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2300') DO SET RESTRICTEDPROTOCOLS2=%%C) 2>nul
+
+(if not exist "2300" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2300') DO SET RESTRICTEDPROTOCOLS2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%RESTRICTEDPROTOCOLS2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Display mixed content (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1609') DO SET MIXEDCONTENT2=%%C) 2>nul
+
+(if not exist "1609" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1609') DO SET MIXEDCONTENT2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%MIXEDCONTENT2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Launching of programs and files in an IFRAME (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1804') DO SET IEFRAME2=%%C) 2>nul
+
+(if not exist "1804" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1804') DO SET IEFRAME2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%IEFRAME2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Navigate windeows and frames across different domains (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1607') DO SET SUBFRAMES2=%%C) 2>nul
+
+(if not exist "1607" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1607') DO SET SUBFRAMES2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%SUBFRAMES2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Userdata persistence (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1606') DO SET USERDATA2=%%C) 2>nul
+
+(if not exist "1606" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1606') DO SET USERDATA2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%USERDATA2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Web sites in less privileged web content zone can navigate into this zone (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2101') DO SET LESSPRIVI2=%%C) 2>nul
+
+(if not exist "2101" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 2101') DO SET LESSPRIVI2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%LESSPRIVI2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Active Scripting (Enable = 0x0 OR Prompt = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1400') DO SET ACTIVESCRIPTING2=%%C) 2>nul
+
+(if not exist "1400" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1400') DO SET ACTIVESCRIPTING2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%ACTIVESCRIPTING2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Allow Programmatic clipboard access (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1407') DO SET ALLOWPASTE2=%%C) 2>nul
+
+(if not exist "1407" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1407') DO SET ALLOWPASTE2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%ALLOWPASTE2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Scripting of Java Applets (Enable = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1402') DO SET JAVAAPPLETS2=%%C) 2>nul
+
+(if not exist "1402" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\2" /v 1402') DO SET JAVAAPPLETS2=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%JAVAAPPLETS2% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ************************************************************ >>OSCinfo.txt
+
+echo ******************* IE ADVANCED SETTINGS ******************* >>OSCinfo.txt
+
+echo ************************************************************ >>OSCinfo.txt
+
+call :progress 50
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Use software rendering instead of GPU rendering (IE9 and later) (Unchecked = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main" /v UseSWRender') DO SET UseSWRender=%%C) 2>nul
+
+(if not exist "UseSWRender" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main" /v UseSWRender') DO SET UseSWRender=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%UseSWRender% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Send UTF-8 URLs (Unchecked = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v UrlEncoding') DO SET URLENCODING=%%C) 2>nul
+
+(if not exist "UrlEncoding" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v UrlEncoding') DO SET URLENCODING=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%URLENCODING% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Enable third party browser extensions (Checked = yes): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main" /v "Enable Browser Extensions"') DO SET EnableBrowserExtensions=%%C) 2>nul
+
+(if not exist "REG_SZ" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main" /v "Enable Browser Extensions"') DO SET EnableBrowserExtensions=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%EnableBrowserExtensions% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Use HTTP 1.1 through proxy connections (Checked = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyHttp1.1') DO SET PROXYHTTP=%%C) 2>nul
+
+(if not exist "ProxyHttp1.1" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyHttp1.1') DO SET PROXYHTTP=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%PROXYHTTP% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Allow active content to run in files on my computer (Checked = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN" /v iexplore.exe') DO SET ALLOWACTIVECONTENT=%%C) 2>nul
+
+(if not exist "iexplore.exe" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN" /v iexplore.exe') DO SET ALLOWACTIVECONTENT=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%ALLOWACTIVECONTENT% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Do not save encrypted pages to disk (Unchecked = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v DisableCachingOfSSLPages') DO SET DisableCachingOfSSLPages=%%C) 2>nul
+
+(if not exist "DisableCachingOfSSLPages" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v DisableCachingOfSSLPages') DO SET DisableCachingOfSSLPages=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%DisableCachingOfSSLPages% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Empty Temporary Internet Files when browser is closed (Unchecked = 0x1): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Cache" /v Persistent') DO SET Persistent=%%C) 2>nul
+
+(if not exist "Persistent" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Cache" /v Persistent') DO SET Persistent=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%Persistent% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Use SSL 3.0 (Default IE7 = 0xa0): >>OSCinfo.txt
+
+echo Use SSL 3.0 (Default IE6 = 0x28): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HHKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v SecureProtocols') DO SET SecureProtocols=%%C) 2>nul
+
+(if not exist "SecureProtocols" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v SecureProtocols') DO SET SecureProtocols=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%SecureProtocols% >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo Legend: >>OSCinfo.txt
+
+echo IE 7 Settings: >>OSCinfo.txt
+
+echo If Use SSL 3.0 and TLS 1.0 are check, not Use SSL 2.0 (Default IE7 Settings) = 0xa0 >>OSCinfo.txt
+
+echo If Use SSL 3.0, Use SSL 2.0 and Use TLS 1.0 are all checked = 0xa8 >>OSCinfo.txt
+
+echo If Use SSL 3.0, Use SSL 2.0 and Use TLS 1.0 are all NOT checked = 0x0 >>OSCinfo.txt
+
+Echo IE6 Settings: >>OSCinfo.txt
+
+echo If Use SSL 3.0 and Use SSL 2.0 are checked, not Use TLS 1.0 (IE6 Default) = 0x28 >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo Warn if changing between secure and not secure mode (Unchecked = 0x0): >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v WarnOnZoneCrossing') DO SET WarnOnZoneCrossing=%%C) 2>nul
+
+(if not exist "WarnOnZoneCrossing" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v WarnOnZoneCrossing') DO SET WarnOnZoneCrossing=%%C) 2>nul
+
+echo. >>OSCinfo.txt
+
+echo Value=%WarnOnZoneCrossing% >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo Loading Internet Explorer Proxy Server Information
+
+ Call :progress 55
+
+echo ************************************************************** >>OSCinfo.txt
+
+echo ****************** PROXY SERVER INFORMATION ****************** >>OSCinfo.txt
+
+echo ************************************************************** >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo Internet Explorer Proxy Server Information: >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer') DO SET ProxyServer=%%C) 2>nul
+
+(if not exist "ProxyServer" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer') DO SET ProxyServer=%%C) 2>nul
+
+echo ProxyServer=%ProxyServer% >>OSCinfo.txt
+
+ 
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable') DO SET ProxyEnable=%%C) 2>nul
+
+(if not exist "ProxyEnable" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable') DO SET ProxyEnable=%%C) 2>nul
+
+echo ProxyEnable=%ProxyEnable% >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. ----------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Use Automatic Configuration Script: >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v AutoConfigURL') DO SET AutoConfigURL=%%C) 2>nul
+
+(if not exist "AutoConfigURL" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v AutoConfigURL') DO SET AutoConfigURL=%%C) 2>nul
+
+echo Use Automatic Configuration Script=%AutoConfigURL% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v DefaultConnectionSettings') DO SET DefaultConnectionSettings=%%C) 2>nul
+(if not exist "DefaultConnectionSettings" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /v DefaultConnectionSettings') DO SET DefualtConnectionSettings=%%C) 2>nul
+echo Automatically Detect Settings= >>OSCinfo.txt
+echo 	%DefaultConnectionSettings% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo 'Automatically detect settings' is determined by the 9th hexidecimal of the registry binary.>>OSCinfo.txt
+echo The setting can be determined by the following values: >>OSCinfo.txt
+echo	01 - Neither 'Automatically detect settings' or 'Use automatic configuration script' are enabled >>OSCinfo.txt
+echo	03 - Only 'Use a proxy server for your LAN' is enabled >>OSCinfo.txt
+echo	05 - Only 'Use automatic configuration script' is enabled >>OSCinfo.txt
+echo	07 - Both 'Use a proxy server for your LAN' and 'Use automatic configuration script' are enabled >>OSCinfo.txt
+echo	09 - Only 'Automatically detect settings' is enabled >>OSCinfo.txt
+echo	0B - Both 'Automatically detect settings' and 'Use a proxy server for your LAN' are enabled >>OSCinfo.txt
+echo	0D - Both 'Automatically detect settings' and 'Use automatic configuration script' are enabled >>OSCinfo.txt
+echo	0F - 'Automatically detect settings', 'Use a proxy server for your LAN' and 'Use automatic configuration script' are ALL enabled >>OSCinfo.txt
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+
+
+ 
+
+echo Loading Windows Profile Information
+
+echo ************************************************************** >>OSCinfo.txt
+
+echo **************** WINDOWS PROFILE INFORMATION ***************** >>OSCinfo.txt
+
+echo ************************************************************** >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo WINDOWS PROFILE: >>OSCinfo.txt
+
+echo %USERPROFILE% >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo LOCAL ADMINISTRATORS GROUP: >>OSCinfo.txt
+
+net localgroup administrators >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+
+ call :progress 60
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo ******************************************************************** >>OSCinfo.txt
+
+echo *************** WINDOWS ROAMING or MANDATORY PROFILE *************** >>OSCinfo.txt
+
+echo ******************************************************************** >>OSCinfo.txt
+
+ 
+
+reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList" /s | find "CentralProfile" >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo LEGEND: >>OSCinfo.txt
+
+echo Example 1: >>OSCinfo.txt
+
+echo CentralProfile         REG_SZ >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Example 2: >>OSCinfo.txt
+
+echo CentralProfile         REG_SZ                \\servername\sharename\profilename >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo The examples listed above show a non roaming/mandatory Windows profile (Example 1) and a mandatory/roaming Windows profile (Example 2). >>OSCinfo.txt
+
+echo If you can correlate the "profilename" at the end of the string with %USERPROFILE% listed above, this is likely a mandatory/roaming Windows profile. >>OSCinfo.txt
+
+echo If you see anything other than a nul value, this indicates a roaming or mandatory Windows Profile has been created on the workstation. >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo REGISTRY KEY VALUES FOR NTUSER.man >>OSCinfo.txt
+
+echo NOTE: If the below area below is blank, this would indicate no Windows Mandatory Profiles are found on the workstation. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\hivelist" >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+reg query "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\hivelist" /s | find "NTUSER.man" >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo LEGEND: >>OSCinfo.txt
+
+echo Example 1: \Device\HarddiskVolume1\Documents and Settings\%username%\NTUSER.man >>OSCinfo.txt
+
+echo The example above (Example 1:) would indicate a Windows Mandatory Profile. However, if the value is nul this does not dismiss the possibility of the Windows Profile being a Roaming Windows Profile. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo Nul value = no Windows Mandatory Profile >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo Loading HOSTS File Information
+
+echo ********************************************************** >>OSCinfo.txt
+
+echo ***************** HOSTS FILE INFORMATION ***************** >>OSCinfo.txt
+
+echo ********************************************************** >>OSCinfo.txt
+
+ call :progress 65
+
+echo. >>OSCinfo.txt
+
+echo The information listed below is in the "hosts" file located at %windir%\system32\drivers\etc\hosts >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo HOST FILE INFORMATION: >>OSCinfo.txt
+
+if exist %windir%\system32\drivers\etc\hosts type %windir%\system32\drivers\etc\hosts >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo Loading Oracle Service Cloud File Listing
+
+echo ******************************************************** >>OSCinfo.txt
+
+echo ********** ORACLE SERVICE CLOUD FILE LISTING *********** >>OSCinfo.txt
+
+echo ******************************************************** >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo Oracle Service Cloud DEPLOYMENT FOLDER: >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+if exist "%USERPROFILE%\AppData\Roaming\RightNow_Technologies" dir /s /o-d "%USERPROFILE%\AppData\Roaming\RightNow_Technologies" >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo Oracle Service Cloud CLICKONCE FOLDER: >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+if exist "%USERPROFILE%\AppData\Local\Apps\2.0" dir /s /o-d "%USERPROFILE%\AppData\Local\Apps\2.0" >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo Oracle Service Cloud START MENU FOLDER: >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+if exist "%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\RightNow" dir /s /o-d "%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\RightNow" >>OSCinfo.txt
+
+ 
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo Oracle Service Cloud CITRIX DEPLOYMENT FOLDER: >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+if exist "C:\Program Files (x86)\Oracle\Oracle RightNow CX Cloud Service" dir /s /o-d "C:\Program Files (x86)\Oracle\Oracle RightNow CX Cloud Service" >>OSCinfo.txt
+
+if exist "C:\Program Files (x86)\Oracle RightNow CX Cloud Service" dir /s /o-d "C:\Program Files (x86)\Oracle RightNow CX Cloud Service" >>OSCinfo.txt
+
+if exist "C:\Program Files\Oracle\Oracle RightNow CX Cloud Service" dir /s /o-d "C:\Program Files\Oracle\Oracle RightNow CX Cloud Service" >>OSCinfo.txt
+
+if exist "C:\Program Files\Oracle RightNow CX Cloud Service" dir /s /o-d "C:\Program Files\Oracle RightNow CX Cloud Service" >>OSCinfo.txt
+
+if exist "C:\Program Files\RightNow Technologies\RightNow CX" dir /s /o-d "C:\Program Files\RightNow Technologies\RightNow CX" >>OSCinfo.txt
+
+if exist "C:\Program Files (x86)\RightNow Technologies\RightNow CX" dir /s /o-d "C:\Program Files (x86)\RightNow Technologies\RightNow CX" >>OSCinfo.txt
+
+
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo ---------------------------------------------------------------- >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo Oracle Service Cloud OUTLOOK INTEGRATION FOLDER: >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+if exist "C:\Program Files (x86)\Oracle RightNow Outlook Sync" dir /s /o-d "C:\Program Files (x86)\Oracle RightNow Outlook Sync" >>OSCinfo.txt
+
+if exist "C:\Program Files (x86)\Oracle Service Cloud Outlook Sync" dir /s /o-d "C:\Program Files (x86)\Oracle Service Cloud Outlook Sync" >>OSCinfo.txt
+
+if exist "C:\Program Files\Oracle RightNow Outlook Sync" dir /s /o-d "C:\Program Files\Oracle RightNow Outlook Sync" >>OSCinfo.txt
+
+if exist "C:\Program Files\Oracle Service Cloud Outlook Sync" dir /s /o-d "C:\Program Files\Oracle Service Cloud Outlook Sync" >>OSCinfo.txt
+
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+ 
+
+echo Loading Windows Time Server Information
+
+echo *********************************************************** >>OSCinfo.txt
+
+echo ******************* WINDOWS TIME SERVER ******************* >>OSCinfo.txt
+
+echo *********************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\W32Time\Parameters" /v "NtpServer"') DO SET TIMESERVER=%%C) 2>nul
+
+(if not exist "NtpServer" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\W32Time\Parameters" /v "NtpServer"') DO SET TIMESERVER=%%C) 2>nul
+
+echo Server: >>OSCinfo.txt
+
+echo. %TIMESERVER% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+(FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Parameters" /v "NtpServer"') DO SET TIMESERVERSA=%%C) 2>nul
+
+(if not exist "NtpServer" FOR /F "tokens=1,2*" %%A IN ('reg query "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\W32Time\Parameters" /v "NtpServer"') DO SET TIMESERVERSA=%%C) 2>nul
+
+echo Local Workstation: >>OSCinfo.txt
+
+echo. %TIMESERVERSA% >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+ 
+echo Loading Installed Applications 
+
+echo *********************************************************** >>OSCinfo.txt
+
+echo ****************** INSTALLED PROGRAMS ********************* >>OSCinfo.txt
+
+echo *********************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+ call :progress 70
+
+wmic /append:OSCinfo.txt product get name,version >nul
+
+echo. >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+
+
+echo Loading Installed Microsoft Updates/Hotfixes
+
+echo *********************************************************** >>OSCinfo.txt
+
+echo ****************** INSTALLED UPDATES ********************** >>OSCinfo.txt
+
+echo *********************************************************** >>OSCinfo.txt
+
+echo. >>OSCinfo.txt
+wmic /append:OSCinfo.txt qfe get hotfixid,description,installedon >nul
+
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt 
+
+echo ************************************************************* >>OSCinfo.txt
+
+echo ******************** NETWORK INFORMATION ******************** >>OSCinfo.txt
+
+echo ************************************************************* >>OSCinfo.txt
+
+call :progress 75
+
+echo. >>OSCinfo.txt
+
+echo Namespace Lookup: >>OSCinfo.txt
+echo. >>OSCinfo.txt
+ 
+nslookup %intname% >>OSCinfo.txt
+
+cls
+
+echo Testing Internet Connection (pings and traceroutes)
+echo.
+echo.
+echo	             Please be patient, this may take a few minutes.
+echo.
+echo.
+echo	   	     You will be notified when the process
+echo		     has completed.  Closing this window will
+echo		     prematurely terminate the process.
+
+echo.
+echo.
+ 
+echo. >>OSCinfo.txt
+ 
+ping -n 10 -l 800 %intname% >>OSCinfo.txt
+call :progress 77
+ping -n 10 -l 800 %intname% >>OSCinfo.txt
+call :progress 79
+ping -n 10 -l 800 %intname% >>OSCinfo.txt
+call :progress 81
+ping -n 10 -l 800 %intname% >>OSCinfo.txt
+call :progress 83
+ping -n 10 -l 800 %intname% >>OSCinfo.txt
+ 
+echo. >>OSCinfo.txt
+call :progress 85
+ 
+tracert %intname% >>OSCinfo.txt
+call :progress 87
+tracert %intname% >>OSCinfo.txt
+call :progress 89
+tracert %intname% >>OSCinfo.txt
+call :progress 91
+tracert %intname% >>OSCinfo.txt
+call :progress 93
+tracert %intname% >>OSCinfo.txt
+ 
+echo. >>OSCinfo.txt
+echo. >>OSCinfo.txt
+
+ call :progress 95
+echo %date% >>OSCinfo.txt
+echo %time% >>OSCinfo.txt
+ 
+ 
+REM START /max /wait NOTEPAD.EXE OSCinfo.txt
+
+Title ORNinfo.bat - Operation Complete
+
+cls
+Color 2F
+echo.
+echo.
+echo.
+echo.
+echo.
+echo	          ******************************************************
+echo	          *				                       *
+echo	          *  	    	  Oracle Service Cloud	               *
+echo		  * 	       Workstation Data Collector	       *
+echo           *                Operation Complete                  *
+echo	          *				                       *
+echo	          ******************************************************
+echo.
+echo.
+echo               Thank you for your patience! The data collector
+echo			         process has completed.
+echo.
+echo		     You should now see a file on your desktop called
+echo                              'OSCinfo.txt' 
+echo. 
+echo		   Please provide this file to your Oracle Service Cloud
+echo                        support agent for analysis.
+echo.
+pause
+color 0F
+cls
+goto exit
+
+:progress
+SETLOCAL ENABLEDELAYEDEXPANSION
+SET ProgressPercent=%1
+SET /A NumBars=%ProgressPercent%/2
+SET /A NumSpaces=50-%NumBars%
+SET Meter=
+FOR /L %%A IN (%NumBars%,-1,1) DO SET Meter=!Meter!I
+FOR /L %%A IN (%NumSpaces%,-1,1) DO SET Meter=!Meter! 
+TITLE Oracle Service Cloud Data Collector Progress:  [%Meter%]  %ProgressPercent%%%
+ENDLOCAL
+
+:exit
+
+
