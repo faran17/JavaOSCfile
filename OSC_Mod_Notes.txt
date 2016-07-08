@@ -1,0 +1,58 @@
+//It depends on what is your goal. You can replace echo with System.out.println. For calling external commands you can use //ProcessBuilder:
+
+ProcessBuilder processBuilder = new ProcessBuilder("command", "param1","param2");
+Process process = processBuilder.start();
+//From the process you can obtain InputStream giving access to console output produced by the process:
+
+InputStream processOutput = process.getInputStream();
+
+// Ping date/time server and write it to the output file
+
+
+// Retrieve OS Version
+
+public class App {
+    public static void main( String[] args ) {
+        //Operating system name
+        System.out.println(System.getProperty("os.name"));
+
+        //Operating system version
+        System.out.println(System.getProperty("os.version"));
+
+        //Path separator character used in java.class.path
+        System.out.println(System.getProperty("path.separator"));
+
+        //User working directory
+        System.out.println(System.getProperty("user.dir"));
+
+        //User home directory
+        System.out.println(System.getProperty("user.home"));
+
+        //User account name
+        System.out.println(System.getProperty("user.name"));
+
+        //Operating system architecture
+        System.out.println(System.getProperty("os.arch"));
+
+        //Sequence used by operating system to separate lines in text files
+        System.out.println(System.getProperty("line.separator"));
+
+        System.out.println(System.getProperty("java.version")); //JRE version number
+
+        System.out.println(System.getProperty("java.vendor.url")); //JRE vendor URL
+
+        System.out.println(System.getProperty("java.vendor")); //JRE vendor name
+
+        System.out.println(System.getProperty("java.home")); //Installation directory for Java Runtime Environment (JRE)
+
+        System.out.println(System.getProperty("java.class.path"));
+
+        System.out.println(System.getProperty("file.separator"));
+    }
+}
+
+// Gather the following information and Parse to variables 
+
+Oracle Service Cloud Username / Site Name / Interface Name
+
+// 
