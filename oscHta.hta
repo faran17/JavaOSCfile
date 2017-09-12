@@ -12,58 +12,53 @@
 <script language="VBScript">
 
     Sub GetOSVersion
-       strComputer = "."
-           Set objWMIService = GetObject("winmgmts:\\" & strComputer &  "\root\cimv2")
-
-           Set colOperatingSystems = objWMIService.ExecQuery _
-               ("Select * from Win32_OperatingSystem")
-
-           For Each objOperatingSystem in colOperatingSystems
-               Msgbox objOperatingSystem.Caption & " " & _
-                   objOperatingSystem.Version
-           Next
-      End Sub
+        strComputer = "."
+        Set objWMIService = GetObject("winmgmts:\\" & strComputer & "\root\cimv2")
+        Set colOperatingSystems = objWMIService.ExecQuery _
+            ("Select * from Win32_OperatingSystem")
+        For Each objOperatingSystem in colOperatingSystems
+            DataArea.InnerHTML = objOperatingSystem.Caption & " " & _
+                objOperatingSystem.Version
+        Next
+    End Sub
 
   	Sub GetProcesses
-
       strComputer = "."
-
       Set objWMIService = GetObject("winmgmts:\\" & strComputer & "\root\cimv2")
       Set colProcesses = objWMIService.ExecQuery("Select * from Win32_Process")
-
       For Each objProcess in colProcesses
           strHTML = strHTML & objProcess.Name
       Next
-
       DataArea.InnerHTML = strHTML
-
-      End Sub
-
-    Sub TestSub
-        Msgbox ScriptArea.Value
-      End Sub
-
+    End Sub
+ 
     Sub TestSub
             If OptionChooser.Value <> 0 Then
                 Msgbox "You selected Option " & OptionChooser.Value & "."
             End If
       End Sub
+
 </script>
-
+<p>
 <body>
-<select size="1" name="OptionChooser" onChange="TestSub">
-    <option value="0"></option>
-    <option value="1">Firefox Clear Cache/Cookies</option>
-    <option value="2">Backup/Restore Firefox</option>
-    <option value="3">Re-Map Home Drive</option>
-    <option value="4">Add AZA10 Printer</option>
+  <select size="1" name="OptionChooser" onChange="TestSub">
+      <option value="0"></option>
+      <option value="1">Firefox Clear Cache/Cookies</option>
+      <option value="2">Backup/Restore Firefox</option>
+      <option value="3">Re-Map Home Drive</option>
+      <option value="4">Add AZA10 Printer</option>
+  </select> <p>
 
-</select>
+
 <body bgcolor="grey">
-<input type="button" value="Operating System" name="run_button"  onClick="GetOSVersion"><p>
-<input type="button" value="Process" name="run_button"  onClick="GetProcesses"><p>
-<input type="checkbox" name="Checkbox1"> Checkbox 1><p>
-<textarea name="ScriptArea" rows=5 cols=70></textarea><p>
-<span id = "DataArea">Click the button to return information about the operating system.</span> 
+
+<input type="button" value="Operating System" name="run_button"  onClick="GetOSVersion" align="center"><p>
+
+<input type="button" value="Process" name="run_button"  onClick="GetProcesses" align="center"><p>
+
+<span id = "DataArea" align="center"></span><p>
+
+<textarea name="ScriptArea" rows=5 cols=70 align="center">Notes</textarea><p>
+
 
 </body>
